@@ -99,7 +99,10 @@
             </div>
 
             <label for="numLevels">Number of Levels Operated on:</label>
-            <input type="number" id="numLevels" name="numLevels" required>
+            <div class="slider-wrapper">
+                <input type="range" id="numLevelsRange" name="numLevelsRange" min="0" max="10" value="2" oninput="syncNumLevels(this.value)">
+                <input type="number" id="numLevels" name="numLevels" min="0" max="10" value="2" oninput="syncNumLevels(this.value)">
+            </div>
 
             <label for="age">Age:</label>
             <div class="slider-wrapper">
@@ -125,6 +128,11 @@
     </div>
 
     <script>
+        function syncNumLevels(value) {
+            document.getElementById('numLevels').value = value;
+            document.getElementById('numLevelsRange').value = value;
+        }
+
         function syncAge(value) {
             document.getElementById('age').value = value;
             document.getElementById('ageRange').value = value;
@@ -166,14 +174,21 @@
             const linearCombinationSevere = interceptSevere + (coeffMultiOrSingleSevere * multiOrSingle) + (coeffNumLevelsSevere * numLevels) + (coeffAgeSevere * age) + (coeffPreMJOASevere * preMJOA) + (coeffSurgeryTypeSevere * surgeryType);
             const pSevere = 1 / (1 + Math.exp(-linearCombinationSevere));
 
-            // Display results as percentages
-            document.getElementById('result').innerHTML = `
-                <strong>Probability of Mild MJOA:</strong><br>
-                ${(pMild * 100).toFixed(2)}%<br><br>
-                <strong>Probability of Severe MJOA:</strong><br>
-                ${(pSevere * 100).toFixed(2)}%
-            `;
+            // Display the more likely outcome
+            const resultContainer = document.getElementById('result');
+            if (pMild > pSevere) {
+                resultContainer.innerHTML = `
+                    <strong>Most Likely Outcome: Mild MJOA</strong><br>
+                    Probability: ${(pMild * 100).toFixed(2)}%
+                `;
+            } else {
+                resultContainer.innerHTML = `
+                    <strong>Most Likely Outcome: Severe MJOA</strong><br>
+                    Probability: ${(pSevere * 100).toFixed(2)}%
+                `;
+            }
         }
     </script>
 </body>
 </html>
+
