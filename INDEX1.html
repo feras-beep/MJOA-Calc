@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post-Operative MJOA Score Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f9fc;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin: 15px 0 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="number"], select, .checkbox-wrapper, input[type="range"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            padding: 0;
+        }
+        .checkbox-wrapper input {
+            width: auto;
+            margin-right: 10px;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 18px;
+            color: #333;
+        }
+        .slider-wrapper {
+            display: flex;
+            align-items: center;
+        }
+        .slider-wrapper input[type="range"] {
+            flex: 1;
+            margin-right: 10px;
+        }
+        .slider-wrapper input[type="number"] {
+            width: 60px;
+            flex: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Post-Operative MJOA Score Calculator</h1>
+        <form id="calculator-form">
+            <div class="checkbox-wrapper">
+                <input type="checkbox" id="multiOrSingle" name="multiOrSingle">
+                <label for="multiOrSingle" style="margin: 0;">Multi-level Disease</label>
+            </div>
+
+            <label for="numLevels">Number of Levels Operated on:</label>
+            <input type="number" id="numLevels" name="numLevels" required>
+
+            <label for="age">Age:</label>
+            <div class="slider-wrapper">
+                <input type="range" id="ageRange" name="ageRange" min="0" max="100" value="50" oninput="syncAge(this.value)">
+                <input type="number" id="age" name="age" min="0" max="100" value="50" oninput="syncAge(this.value)">
+            </div>
+
+            <label for="preMJOA">Pre-MJOA:</label>
+            <div class="slider-wrapper">
+                <input type="range" id="preMJOARange" name="preMJOARange" min="0" max="18" value="9" oninput="syncPreMJOA(this.value)">
+                <input type="number" id="preMJOA" name="preMJOA" min="0" max="18" value="9" oninput="syncPreMJOA(this.value)">
+            </div>
+
+            <label for="surgeryType">Anterior or Posterior Surgery:</label>
+            <select id="surgeryType" name="surgeryType" required>
+                <option value="0">Anterior</option>
+                <option value="1">Posterior</option>
+            </select>
+
+            <button type="button" onclick="calculateProbability()">Calculate</button>
+        </form>
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        function syncAge(value) {
+            document.getElementById('age').value = value;
+            document.getElementById('ageRange').value = value;
+        }
+
+        function syncPreMJOA(value) {
+            document.getElementById('preMJOA').value = value;
+            document.getElementById('preMJOARange').value = value;
+        }
+
+        function calculateProbability() {
+            // Get input values
+            const multiOrSingle = document.getElementById('multiOrSingle').checked ? 1 : 0;
+            const numLevels = parseFloat(document.getElementById('numLevels').value);
+            const age = parseFloat(document.getElementById('age').value);
+            const preMJOA = parseFloat(document.getElementById('preMJOA').value);
+            const surgeryType = parseFloat(document.getElementById('surgeryType').value);
+
+            // Logistic regression coefficients for Mild MJOA
+            const interceptMild = 0.155975;
+            const coeffMultiOrSingleMild = 0.381341;
+            const coeffNumLevelsMild = 0.117935;
+            const coeffAgeMild = -0.007439;
+            const coeffPreMJOAMild = 0.048974;
+
+            // Logistic regression coefficients for Severe MJOA
+            const interceptSevere = 0.720944;
+            const coeffMultiOrSingleSevere = -0.212477;
+            const coeffNumLevelsSevere = -0.119451;
+            const coeffAgeSevere = 0.004842;
+            const coeffPreMJOASevere = -0.058400;
+            const coeffSurgeryTypeSevere = 0.163258;
+
+            // Calculate probability for Mild MJOA
+            const linearCombinationMild = interceptMild + (coeffMultiOrSingleMild * multiOrSingle) + (coeffNumLevelsMild * numLevels) + (coeffAgeMild * age) + (coeffPreMJOAMild * preMJOA);
+            const pMild = 1 / (1 + Math.exp(-linearCombinationMild));
+
+            // Calculate probability for Severe MJOA
+            const linearCombinationSevere = interceptSevere + (coeffMultiOrSingleSevere * multiOrSingle) + (coeffNumLevelsSevere * numLevels) + (coeffAgeSevere * age) + (coeffPreMJOASevere * preMJOA) + (coeffSurgeryTypeSevere * surgeryType);
+            const pSevere = 1 / (1 + Math.exp(-linearCombinationSevere));
+
+            // Display results as percentages
+            document.getElementById('result').innerHTML = `
+                <strong>Probability of Mild MJOA:</strong><br>
+                ${(pMild * 100).toFixed(2)}%<br><br>
+                <strong>Probability of Severe MJOA:</strong><br>
+                ${(pSevere * 100).toFixed(2)}%
+            `;
+        }
+    </script>
+</body>
+</html>
